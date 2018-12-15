@@ -1,3 +1,3 @@
 from .keyboard import *
-from .tuner import *
+from .music import *
 from .player import *

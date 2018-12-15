@@ -10,16 +10,14 @@ with open(os.devnull, 'w') as devnull:
     sys.stderr = sys.__stderr__
 
 
-class Keyboard:
+class KeyboardMidi:
     def __init__(self, verbose=False, wait_time=10):
         self.input = None
         self.listening = False
         self.dev = None
-        self.keys = {}
-        self.sustain = None
         self.verbose = verbose
         self.wait_time = wait_time
-        self.observers = set()
+        self.keyboard = Keyboard()
 
         pygame.init()
         pygame.midi.init()
@@ -35,44 +33,48 @@ class Keyboard:
         self.check_dev()
         self.input = pygame.midi.Input(self.dev)
         try:
-            self.loop()
+            while self.listening:
+                self.loop()
         except KeyboardInterrupt:
             self.input.close()
             raise
 
     def loop(self):
-        while self.listening:
-            if self.input.poll():
-                midi_events = self.input.read(10)
-                for e in midi_events:
-                    self.handle_event(e)
-            self.update()
-            if self.wait_time is not None:
-                pygame.time.wait(self.wait_time)
-
-    def update(self):
-        for observer in self.observers:
-            observer.update(self)
+        if self.input.poll():
+            midi_events = self.input.read(10)
+            for e in midi_events:
+                self.handle_event(e)
+        self.keyboard.notify()
+        if self.wait_time is not None:
+            pygame.time.wait(self.wait_time)
 
     def handle_event(self, event):
         [[status, key, velocity, _], time] = event
         if status == 144:
-            self.press(key-21, velocity, time)
+            self.keyboard.press(key-21, velocity, time)
         elif status == 128:
-            self.release(key-21)
+            self.keyboard.release(key-21)
         elif status == 176 or status == 177:
             if velocity == 127:
-                self.press_sustain()
+                self.keyboard.press_sustain()
             else:
-                self.release_sustain()
+                self.keyboard.release_sustain()
         else:
             raise Exception("Unknown Status: {}".format(status))
 
-    def stop_listening(self):
-        self.listening = False
+    def watch(self, observer):
+        self.keyboard.watch(observer)
 
-    def is_pressed(self, key):
-        return self.keys.get(key, False)
+    def __del__(self):
+        pygame.midi.quit()
+        pygame.quit()
+
+
+class Keyboard:
+    def __init__(self):
+        self.keys = {}
+        self.sustain = None
+        self.observers = set()
 
     def press_sustain(self):
         if self.sustain is not None:
@@ -100,9 +102,10 @@ class Keyboard:
         else:
             self.keys[key] = []
 
+    def notify(self):
+        for observer in self.observers:
+            observer.update(self)
+
     def watch(self, observer):
         self.observers.add(observer)
 
-    def __del__(self):
-        pygame.midi.quit()
-        pygame.quit()

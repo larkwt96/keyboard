@@ -1,18 +1,15 @@
-from .keyboard import Keyboard
-from .tuner import Note
+from .keyboard import KeyboardMidi
+from .music import Note
 
 
 class Player:
     def __init__(self, keyboard=None):
         self.keyboard = keyboard
         if self.keyboard is None:
-            self.keyboard = Keyboard()
+            self.keyboard = KeyboardMidi()
 
-    def update(self, keyboard=None, data=None):
-        if keyboard is None:
-            keyboard = self.keyboard
-        if data is not None:
-            print(data)
+    @staticmethod
+    def update(keyboard):
         found = False
         for key, values in keyboard.keys.items():
             if values is not None:
