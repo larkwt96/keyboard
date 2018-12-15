@@ -1,16 +1,31 @@
-import keyboard
+from .keyboard import Keyboard
+from .tuner import Note
+
 
 class Player:
-    def __init__(self):
-        self.keyboard = keyboard.Keyboard()
+    def __init__(self, keyboard=None):
+        self.keyboard = keyboard
+        if self.keyboard is None:
+            self.keyboard = Keyboard()
 
-    def update(self, keyboard):
-        print('update')
-        for key, value in keyboard.keys.items():
-            if value is not None:
-                print('key: {}, velocity: {}, time: {}'.format(key, *value))
+    def update(self, keyboard=None, data=None):
+        if keyboard is None:
+            keyboard = self.keyboard
+        if data is not None:
+            print(data)
+        found = False
+        for key, values in keyboard.keys.items():
+            if values is not None:
+                for value in values:
+                    found = True
+                    print('({} / {} at {})'.format(Note(key), *value))
+        if found:
+            print()
 
     def run(self):
         self.keyboard.watch(self)
-        self.keyboard.listen()
-
+        try:
+            self.keyboard.listen()
+        except KeyboardInterrupt:
+            print()
+            print("Exiting.")

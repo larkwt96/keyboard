@@ -1,70 +1,46 @@
-import pygame
-import pygame.midi
+import sys
+import os
 
-
-class KeySetBuilder:
-    def __init__(self,
-                 root=440,
-                 root_index=48,
-                 num_keys=88,
-                 keys_per_octave=12):
-        self.root = root
-        self.root_index = root_index
-        self.num_keys = num_keys
-        self.keys_per_octave = keys_per_octave
-    
-    def build_keys(self):
-        return [self.get_freq(i) for i in range(self.num_keys)]
-
-    def get_freq(self, key):
-        steps = (key-self.root_index)/self.keys_per_octave
-        ratio = 2**steps
-        return self.root * ratio
-
-    def build(self):
-        return KeySet(self, True)
-
-
-class KeySet:
-    standard = []
-
-    def __init__(self, builder=None, build=True):
-        self.keys = None
-        self.builder = builder
-
-        if builder is None:
-            self.keys = standard
-        elif build:
-            self.keys = builder.build_keys()
-
-    def get_freq(self, key):
-        if self.keys is None:
-            return self.builder.get_freq(key)
-        else:
-            return self.keys[key]
+with open(os.devnull, 'w') as devnull:
+    sys.stdout = devnull
+    sys.stderr = devnull
+    import pygame
+    import pygame.midi
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
 
 
 class Keyboard:
     def __init__(self, verbose=False, wait_time=10):
-        pygame.init()
-        pygame.midi.init()
-        pygame.fastevent.init()
+        self.input = None
         self.listening = False
-        self.dev = pygame.midi.get_default_input_id()
-        self.check_dev()
+        self.dev = None
         self.keys = {}
         self.sustain = None
         self.verbose = verbose
-        self.input = pygame.midi.Input(self.dev)
         self.wait_time = wait_time
         self.observers = set()
 
+        pygame.init()
+        pygame.midi.init()
+        pygame.fastevent.init()
+
     def check_dev(self):
-        if self.dev != -1:
+        if self.dev == -1:
             raise Exception("No Midi device found")
 
     def listen(self):
         self.listening = True
+        self.dev = pygame.midi.get_default_input_id()
+        self.check_dev()
+        self.input = pygame.midi.Input(self.dev)
+        try:
+            self.loop()
+        except KeyboardInterrupt:
+            self.input.close()
+            raise
+
+    def loop(self):
         while self.listening:
             if self.input.poll():
                 midi_events = self.input.read(10)
@@ -79,9 +55,7 @@ class Keyboard:
             observer.update(self)
 
     def handle_event(self, event):
-        [[status, key, velocity, data3], time] = event
-        #msg = "status: {}, key: {}, vel: {}, data3: {}, time: {}"
-        #print(msg.format(status, key, velocity, data3, time))
+        [[status, key, velocity, _], time] = event
         if status == 144:
             self.press(key-21, velocity, time)
         elif status == 128:
@@ -109,28 +83,26 @@ class Keyboard:
         if self.sustain is None:
             return
         for key, value in self.sustain.items():
-            print('key, value = {}, {}'.format(key, value))
             if value:
-                self.keys[key] = None
+                self.keys[key] = []
         self.sustain = None
 
     def press(self, key, velocity, time):
-        if self.verbose:
-            print('pressed {}'.format(key))
         if self.sustain is not None:
             self.sustain[key] = False
-        self.keys[key] = (velocity, time)
+        if key not in self.keys:
+            self.keys[key] = []
+        self.keys[key].append((velocity, time))
 
     def release(self, key):
-        if self.verbose:
-            print('pressed {}'.format(key))
         if self.sustain is not None:
             self.sustain[key] = True
         else:
-            self.keys[key] = None
+            self.keys[key] = []
 
     def watch(self, observer):
         self.observers.add(observer)
 
     def __del__(self):
         pygame.midi.quit()
+        pygame.quit()

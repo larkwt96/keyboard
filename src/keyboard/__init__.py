@@ -1,2 +1,3 @@
-from .keyboard import Keyboard, KeySet, KeySetBuilder
-from .player import Player
+from .keyboard import *
+from .tuner import *
+from .player import *

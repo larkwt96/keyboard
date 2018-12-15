@@ -1,7 +1,7 @@
-import os
 import unittest
 
 import keyboard
+
 
 class TestModel(unittest.TestCase):
     def setUp(self):
@@ -10,5 +10,4 @@ class TestModel(unittest.TestCase):
 
     def test_x(self):
         c4 = 3+12*3
-        self.assertTrue(self.keyset.get_freq(c4) - 261.6 < 1)
-        print(self.keyset.keys)
+        self.assertTrue(abs(self.keyset.get_freq(c4) - 261.6) < .5)
