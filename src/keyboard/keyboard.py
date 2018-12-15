@@ -27,7 +27,7 @@ class Keyboard:
 
     def check_dev(self):
         if self.dev == -1:
-            raise Exception("No Midi device found")
+            raise IOError("No Midi device found")
 
     def listen(self):
         self.listening = True

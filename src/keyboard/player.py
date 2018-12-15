@@ -26,6 +26,7 @@ class Player:
         self.keyboard.watch(self)
         try:
             self.keyboard.listen()
+        except IOError as err:
+            print(err)
         except KeyboardInterrupt:
-            print()
             print("Exiting.")
