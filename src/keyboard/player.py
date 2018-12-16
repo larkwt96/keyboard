@@ -109,7 +109,10 @@ class Player:
         self.notes[note] = time
         self.render(time)
 
-    def play_all(self, notes, times):
+    def play_all(self, notes, times=None):
+        if times is None:
+            curr_time = pygame.time.get_ticks()
+            times = [curr_time for _ in notes]
         for note, time in zip(notes, times):
             note.get_wave(self.sub_x(note.get_duration()))
             self.notes[note] = time
@@ -133,6 +136,10 @@ class Player:
             self.sound.play()
         if old_sound is not None:
             old_sound.stop()
+
+    @staticmethod
+    def delay(ms):
+        pygame.time.delay(ms)
 
 
 class KeyboardPlayer:
