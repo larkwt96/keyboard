@@ -178,7 +178,3 @@ class Note:
             note = value_to_note[note_value]
             accidental = ''
         return note, accidental, octave
-
-
-class SoundGenerator:
-    pass

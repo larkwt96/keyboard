@@ -19,7 +19,6 @@ class KeyboardMidi:
         self.wait_time = wait_time
         self.keyboard = Keyboard()
 
-        pygame.init()
         pygame.midi.init()
         pygame.fastevent.init()
 

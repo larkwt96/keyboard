@@ -8,7 +8,7 @@ setup(
     author='Lucas Wilson',
     author_email='lkwilson96@gmail.com',
     url='https://github.com/larkwt96',
-    install_requires=['pygame'],
+    install_requires=['pygame', 'numpy'],
     packages=['keyboard'],
     package_dir={'keyboard': 'src/keyboard'},
     include_package_data=True,
