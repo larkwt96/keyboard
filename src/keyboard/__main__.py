@@ -18,9 +18,9 @@ def keyboard():
 @main.command()
 @click.argument('notes', type=str, nargs=-1)
 @click.option('--fade-note/--no-fade-note', default=True,
-              help='Fade the note with time')
+              help='Dampen the note with time.')
 @click.option('--play-note/--no-play-note', default=True,
-              help='Play the main note. Defaults to True.')
+              help='Specify whether or not to play current note. True by default.')
 @click.option('--play-minor-third', '-2', is_flag=True,
               help='Play the minor third (6:5).')
 @click.option('--play-major-third', '-3', is_flag=True,
@@ -32,22 +32,62 @@ def keyboard():
 @click.option('--play-octave', '-8', is_flag=True,
               help='Play an octave (2:1).')
 @click.option('--play-ratio', '-r', type=(int, int), multiple=True,
-              help='Play an arbitrary ratio.')
+              help="Specify an arbitrary ratio. '--play-ratio 5 4' will play "
+                   "{note frequency}*5/4. You can specify as many as these as "
+                   "you want.")
 @click.option('--duration', '-t', type=int, default=1000,
-              help='Duration to play note, in milliseconds.')
+              help='Specify the number of milliseconds to play the notes and chords.')
 @click.option('--play-separate', '-s', is_flag=True,
-              help='Play sequence of notes and their intervals separately.')
+              help='Play each note separately. Can be specified with play_chord. False by default.')
 @click.option('--play-chord/--no-play-chord', default=True, is_flag=True,
-              help="Play sequence of notes as a chord. Defaults to True.")
-@click.option('--root-note', '-r', type=str, default="A4",
-              help='The primary note to base tuning. Defaults to A4.')
+              help="Play each note as a chord. Can be specified with play_separate. True by default.")
+@click.option('--root-note', '-n', type=str, default="A4",
+              help='Specify which note to set the frequency on. A4 by default.')
 @click.option('--root-freq', '-f', type=float, default=440,
-              help='The frequency of the primary note. Defaults to 440.')
+              help='Specify what frequency to set for the root note. 440 by default.')
 def note(notes, root_note, root_freq, play_note, play_minor_third,
          play_major_third, play_fourth, play_fifth, play_octave, play_ratio,
          duration, play_separate, play_chord, fade_note):
     """
-    Play notes and intervals.
+    This command will play notes and specified intervals.
+
+    Notes are in the format of Note, accidental and octave. It's case
+    insensitive and no spaces. Notes are A-G or a-g.
+
+    \b
+    Accidentals are any of the following:
+    - s, S, #, or ♯ will be considered as a sharp
+    - x, X, ## or 𝄪 will be considered as a double sharp
+    - nothing, n, N, or ♮ will be considered as a natural
+    - b, B, and ♭ will be considered as a flat
+    - Two adjacent flats will be considered a double flat.
+
+    \b
+    For example,
+    - Cs4 cS4 c#4 will all be C4.
+    - C##4 will be C double-sharp 4th octave
+
+    \b
+    Accidentals are simplified as much as possible. For example,
+    - csssssbbbbx5 will simplify to C𝄪♯5 since there are 3 more sharps than flats.
+    - cssbbb4 will simplify to C♭4, but not B3. However, the note that plays will technically be B3.
+
+    \b
+    Arguments:
+    - notes: It will play these notes. Specify as many as you want.
+    - root_note: Specify which note to set the frequency on. A4 by default.
+    - root_freq: Specify what frequency to set for the root note. 440 by default.
+    - play_note: Specify whether or not to play current note. True by default.
+    - play_minor_third: Specify whether to play minor third. False by default.
+    - play_major_third: Specify whether to play major third. False by default.
+    - play_fourth: Specify whether to play fourth. False by default.
+    - play_fifth: Specify whether to play fifth. False by default.
+    - play_octave: Specify whether to play octave. False by default.
+    - play_ratio: Specify an arbitrary ratio. '--play-ratio 5 4' will play {note frequency}*5/4. You can specify as many as these as you want.
+    - duration: Specify the number of milliseconds to play the notes and chords.
+    - play_separate: Play each note separately. Can be specified with play_chord. False by default.
+    - play_chord: Play each note as a chord. Can be specified with play_separate. True by default.
+    - fade_note: Dampen the note with time.
     """
     try:
         root_note = Note(root_note)
