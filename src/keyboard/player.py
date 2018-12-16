@@ -109,11 +109,22 @@ class Player:
         self.notes[note] = time
         self.render(time)
 
-    def stop(self, note, time=None):
-        if time is None:
-            time = pygame.time.get_ticks()
+    def play_all(self, notes, times):
+        for note, time in zip(notes, times):
+            note.get_wave(self.sub_x(note.get_duration()))
+            self.notes[note] = time
+        if len(notes) > 0:
+            self.render(pygame.time.get_ticks())
+
+    def stop(self, note):
         self.notes[note] = None
-        self.render(time)
+        self.render(pygame.time.get_ticks())
+
+    def stop_all(self, notes):
+        for note in notes:
+            self.notes[note] = None
+        if len(notes) > 0:
+            self.render(pygame.time.get_ticks())
 
     def render(self, time):
         old_sound = self.sound
@@ -133,6 +144,7 @@ class KeyboardPlayer:
 
     def update(self, keyboard):
         keep = set()
+        to_play = set()
         for key, values in keyboard.keys.items():
             if values is None:
                 continue
@@ -144,11 +156,18 @@ class KeyboardPlayer:
                 if note_id not in self.playing:
                     note = PlayerBasicNote(note_id, freq, volume)
                     self.playing[note_id] = note
-                    self.player.play(note, time)
+                    to_play.add((note, time))
+        notes = [note for note, time in to_play]
+        times = [time for note, time in to_play]
+        self.player.play_all(notes, times)
+
+        to_stop = []
         for note_id in self.playing.copy():
             if note_id not in keep:
-                self.player.stop(self.playing[note_id])
+                note = self.playing[note_id]
+                to_stop.append(note)
                 del self.playing[note_id]
+        self.player.stop_all(to_stop)
 
     def run(self):
         self.keyboard.watch(self)
