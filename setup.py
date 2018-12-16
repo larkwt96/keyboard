@@ -3,7 +3,7 @@
 from distutils.core import setup
 setup(
     name="keyboard",
-    version='0.9',
+    version='1.0',
     description="A tone generator with midi support",
     author='Lucas Wilson',
     author_email='lkwilson96@gmail.com',
